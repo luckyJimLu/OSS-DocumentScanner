@@ -925,6 +925,12 @@ constructor(
                         callback.onResult(ImageUtil.ImageNotFoundException(src), null)
                         return@thread
                     }
+                    val repairRegions = options?.let { JSONObject(it).optJSONArray("repairRegions") }
+                    if (repairRegions != null && repairRegions.length() > 0) {
+                        val repaired = RepairProcessor.applyRegions(bitmap, repairRegions)
+                        bitmap.recycle()
+                        bitmap = repaired
+                    }
                     callback.onResult(null, cropDocumentSync(bitmap, quads, transforms, saveInFolder, fileName, compressFormat,compressQuality ))
                 } catch (e: Exception) {
                     callback.onResult(e, null)

@@ -573,5 +573,19 @@
     "trash_settings": "trash settings",
     "reset_deletion_preference": "reset deletion preference",
     "reset_deletion_preference_desc": "You'll be asked again whether to move deleted items to Trash or delete them permanently.",
-    "confirm_empty_trash": "Are you sure you want to empty the trash?"
+    "confirm_empty_trash": "Are you sure you want to empty the trash?",
+    "repair": "Repair",
+    "repair_hint": "Paint with one finger. Use two fingers to zoom and move.",
+    "repair_brush": "Brush size",
+    "repair_compare": "Compare original",
+    "repair_original": "Original · tap the eye to return",
+    "repair_fit": "Fit image",
+    "repair_failed": "Repair failed. Undo the stroke and try a smaller area.",
+    "repair_save_failed": "Could not save. Your edits are still here; try again.",
+    "repair_saving": "Saving repair…",
+    "repair_discard_title": "Discard repairs?",
+    "repair_discard_message": "Your unsaved repairs will be lost.",
+    "repair_discard": "Discard",
+    "repair_continue": "Keep editing",
+    "repair_requires_original": "The original image is required for repair."
 }

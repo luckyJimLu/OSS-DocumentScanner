@@ -66,6 +66,7 @@ export interface DetectQRCodeOptions {
 }
 
 export interface CropOptions extends LoadImageOptions {
+    repairRegions?: { width: number; height: number; quad: Quad; strokes: { radius: number; points: number[][] }[] }[];
     transforms?: string;
     saveInFolder?: string;
     fileName?: string;

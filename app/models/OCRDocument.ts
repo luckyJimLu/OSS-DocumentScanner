@@ -2,7 +2,7 @@ import SqlQuery from '@akylas/kiss-orm/dist/Queries/SqlQuery';
 import { ApplicationSettings, File, ImageSource, Observable, ObservableArray, path } from '@nativescript/core';
 import { isString } from '@nativescript/core/utils';
 import { doInBatch } from '@shared/utils/batch';
-import { ColorPaletteData, OCRData, QRCodeData, Quad, Quads, cropDocumentFromFile, ocrDocumentFromFile } from 'plugin-nativeprocessor';
+import { ColorPaletteData, CropOptions, OCRData, QRCodeData, Quad, Quads, cropDocumentFromFile, ocrDocumentFromFile } from 'plugin-nativeprocessor';
 import type {
     DocumentAddedEventData,
     DocumentFolderAddedEventData,
@@ -143,6 +143,7 @@ export enum ExtraFieldType {
 }
 
 export interface DocumentExtra {
+    repairRegions?: { type: 'repair'; value: CropOptions['repairRegions'] };
     color?: string;
     [k: string]:
         | string
@@ -579,6 +580,54 @@ export class OCRDocument extends Observable implements Document {
         // return JSON.parse(this.toString());
     }
 
+    async repairPage(pageIndex: number, strokes: { radius: number; points: number[][] }[]) {
+        const page = this.pages[pageIndex];
+        if (!page?.sourceImagePath || !strokes.length) {
+            throw new Error('The original image is required for repair');
+        }
+        const repairRegions = [
+            ...(page.extra?.repairRegions?.value || []),
+            {
+                width: page.width,
+                height: page.height,
+                quad: page.crop,
+                strokes
+            }
+        ];
+        const folder = File.fromPath(page.imagePath).parent.path;
+        const fileName = `repaired_${Date.now()}.png`;
+        const outputPath = path.join(folder, fileName);
+        try {
+            const images = await cropDocumentFromFile(page.sourceImagePath, [page.crop], {
+                transforms: page.transforms,
+                repairRegions,
+                saveInFolder: folder,
+                fileName,
+                compressFormat: 'png',
+                compressQuality: 100
+            });
+            if (!images?.length || !File.exists(outputPath) || !File.fromPath(outputPath).size) {
+                throw new Error('Could not save the repaired image');
+            }
+            await this.updatePage(
+                pageIndex,
+                {
+                    imagePath: outputPath,
+                    size: File.fromPath(outputPath).size,
+                    ocrData: null,
+                    extra: { ...page.extra, repairRegions: { type: 'repair', value: repairRegions } }
+                },
+                true
+            );
+        } catch (error) {
+            // A committed repository update must never point to a removed file.
+            if (this.pages[pageIndex].imagePath !== outputPath && File.exists(outputPath)) {
+                await File.fromPath(outputPath).remove();
+            }
+            throw error;
+        }
+    }
+
     async updatePageCrop(pageIndex: number, quad: Quad) {
         const page = this.pages[pageIndex];
         // the crop is recomputed from the original image which can have been deleted
@@ -592,6 +641,7 @@ export class OCRDocument extends Observable implements Document {
 
         const images = await cropDocumentFromFile(page.sourceImagePath, [quad], {
             transforms: page.transforms,
+            repairRegions: page.extra?.repairRegions?.value,
             saveInFolder: file.parent.path,
             fileName: file.name,
             compressFormat,
@@ -642,6 +692,7 @@ export class OCRDocument extends Observable implements Document {
             const compressFormat = page.sourceImagePath.toLowerCase().endsWith('.png') ? 'png' : imageExportSettings.imageFormat;
             const images = await cropDocumentFromFile(page.sourceImagePath, [page.crop], {
                 transforms,
+                repairRegions: page.extra?.repairRegions?.value,
                 saveInFolder: file.parent.path,
                 fileName: file.name,
                 compressFormat,

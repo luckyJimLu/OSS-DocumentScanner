@@ -17,6 +17,7 @@
         "com.akylas.documentscanner.utils:PDFUtils",
         "com.akylas.documentscanner.utils:PDFUtils.PDFPrintDocumentAdapter",
         "com.akylas.documentscanner.utils:FunctionCallback",
-        "com.akylas.documentscanner.utils:PDFUtils.Companion"
+        "com.akylas.documentscanner.utils:PDFUtils.Companion",
+        "com.akylas.documentscanner:RepairView"
     ]
 }

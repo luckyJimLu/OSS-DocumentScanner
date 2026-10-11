@@ -553,9 +553,11 @@ export class PageRepository extends BaseRepository<OCRPage, Page> {
             toSave[k] = value;
             if (k === 'extra') {
                 toUpdate[k] = JSON.stringify(Object.assign(page.extra || {}, value));
+            } else if (k === 'imagePath' || k === 'sourceImagePath') {
+                toUpdate[k] = value?.replace(documentsService.dataFolder.path, '') ?? null;
             } else if (k === 'ocrData') {
                 toUpdate[k] = JSON.stringify(value);
-                toUpdate.ocrDataSearch = normalizeSearchString(value.text);
+                toUpdate.ocrDataSearch = value ? normalizeSearchString(value.text) : null;
             } else if (k === 'name') {
                 toUpdate[k] = value;
                 toUpdate.nameSearch = normalizeSearchString(value);

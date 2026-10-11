@@ -543,3 +543,29 @@ Java_com_akylas_documentscanner_CustomImageAnalysisCallback_00024Companion_nativ
     return nullptr;
 #endif
 }
+// Local document healing. Only the masked region is changed; work is bounded to its neighborhood.
+extern "C" JNIEXPORT void JNICALL
+Java_com_akylas_documentscanner_RepairProcessor_nativeInpaint(JNIEnv *env, jobject,
+    jobject source, jobject maskBitmap, jobject output)
+{
+    try {
+        cv::Mat rgba, maskRgba, mask, rgb, result;
+        bitmap_to_mat(env, source, rgba);
+        bitmap_to_mat(env, maskBitmap, maskRgba);
+        cv::cvtColor(maskRgba, mask, cv::COLOR_RGBA2GRAY);
+        cv::threshold(mask, mask, 0, 255, cv::THRESH_BINARY);
+        cv::Rect bounds = cv::boundingRect(mask);
+        if (bounds.empty()) { mat_to_bitmap(env, rgba, output); return; }
+        const int padding = 24;
+        bounds = cv::Rect(bounds.x - padding, bounds.y - padding,
+            bounds.width + 2 * padding, bounds.height + 2 * padding) & cv::Rect(0, 0, rgba.cols, rgba.rows);
+        cv::cvtColor(rgba(bounds), rgb, cv::COLOR_RGBA2RGB);
+        cv::inpaint(rgb, mask(bounds), result, 3.0, cv::INPAINT_TELEA);
+        cv::Mat repaired;
+        cv::cvtColor(result, repaired, cv::COLOR_RGB2RGBA);
+        repaired.copyTo(rgba(bounds), mask(bounds));
+        mat_to_bitmap(env, rgba, output);
+    } catch (const std::exception &error) {
+        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), error.what());
+    }
+}

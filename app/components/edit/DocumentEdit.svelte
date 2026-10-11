@@ -615,6 +615,19 @@
         enhanceFiltersCollectionView?.refreshVisibleItems();
     }
 
+    async function repairEdit() {
+        if (!currentItem?.sourceImagePath) {
+            showSnack({ message: lc('repair_requires_original') });
+            return;
+        }
+        try {
+            const component = (await import('./RepairEditView.svelte')).default;
+            await showModal({ page: component, fullscreen: true, props: { document, pageIndex: currentIndex } });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
     let cropItem: ImportImageData = {};
     async function cropEdit() {
         //TODO: recrop into modal window
@@ -770,17 +783,22 @@
             {/if}
         </stacklayout>
 
-        <stacklayout borderTopColor={colorOutline} borderTopWidth={1} orientation="horizontal" row={4}>
-            <mdbutton class="icon-btn" text="mdi-crop" variant="text" visibility={currentItem?.sourceImagePath ? 'visible' : 'collapse'} on:tap={() => cropEdit()} />
-            <mdbutton class="icon-btn" text="mdi-rotate-left" variant="text" on:tap={() => rotateImageLeft()} />
-            <mdbutton class="icon-btn" text="mdi-rotate-right" variant="text" on:tap={() => rotateImageRight()} />
-            <mdbutton class="icon-btn" text="mdi-auto-fix" variant="text" on:tap={showEnhancements} />
-            <mdbutton class="icon-btn" text="mdi-brightness-6" variant="text" on:tap={editBrightnessContrast} />
-            {#if CARD_APP}
-                <mdbutton class="actionBarButton" text="mdi-qrcode-scan" variant="text" on:tap={detectQRCode} />
-            {/if}
-            <mdbutton class="actionBarButton" text="mdi-text-recognition" variant="text" on:tap={showOCRSettings} />
-        </stacklayout>
+        <scrollview orientation="horizontal" row={4} scrollBarIndicatorVisible={true}>
+            <stacklayout borderTopColor={colorOutline} borderTopWidth={1} orientation="horizontal">
+                <mdbutton class="icon-btn" text="mdi-crop" variant="text" visibility={currentItem?.sourceImagePath ? 'visible' : 'collapse'} on:tap={() => cropEdit()} />
+                <mdbutton class="icon-btn" text="mdi-rotate-left" variant="text" on:tap={() => rotateImageLeft()} />
+                <mdbutton class="icon-btn" text="mdi-rotate-right" variant="text" on:tap={() => rotateImageRight()} />
+                <mdbutton class="icon-btn" text="mdi-auto-fix" variant="text" on:tap={showEnhancements} />
+                {#if __ANDROID__}
+                    <mdbutton class="icon-btn" text="mdi-bandage" accessibilityLabel={lc('repair')} variant="text" on:tap={repairEdit} />
+                {/if}
+                <mdbutton class="icon-btn" text="mdi-brightness-6" variant="text" on:tap={editBrightnessContrast} />
+                {#if CARD_APP}
+                    <mdbutton class="actionBarButton" text="mdi-qrcode-scan" variant="text" on:tap={detectQRCode} />
+                {/if}
+                <mdbutton class="actionBarButton" text="mdi-text-recognition" variant="text" on:tap={showOCRSettings} />
+            </stacklayout>
+        </scrollview>
         <!-- <collectionview bind:this={collectionView} id="filters" colWidth={FILTER_COL_WIDTH} height={FILTER_ROW_HEIGHT} items={filters} orientation="horizontal" row={4}>
             <Template let:item>
                 <gridlayout id={item.text} padding={2} on:tap={() => applyImageColorMatrix(item)} on:longPress={(event) => setColorMatrixLevels(item, event)}>
